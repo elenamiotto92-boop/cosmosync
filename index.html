@@ -2,462 +2,132 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CosmoSync - Scienza & Oroscopo Personale</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CosmoSync</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0b0c">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* CSS RESET & VARIABLES */
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --bg-color: #0b0b0c;
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --card-border: rgba(255, 255, 255, 0.06);
-            --accent-amber: #f39c12;
-            --accent-terracotta: #e67e22;
-            --accent-glow: rgba(243, 156, 18, 0.15);
-            --text-main: #f5f5f7;
-            --text-muted: #8e8e93;
-            --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --bg-color: #0b0b0c; --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.06); --accent-amber: #f39c12;
+            --accent-terracotta: #e67e22; --text-main: #f5f5f7; --text-muted: #8e8e93;
+            --font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
         }
-
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* CONTAINER MOBIL-FIRST REAFFINES */
-        .app-container {
-            width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 20px;
-            padding-bottom: 100px; /* Space for bottom nav */
-            flex: 1;
-        }
-
-        /* HEADER */
-        header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding-top: 10px;
-        }
-
-        header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            background: linear-gradient(135deg, var(--text-main), var(--accent-amber));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-        }
-
-        header p {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-top: 4px;
-        }
-
-        /* GLASSMORPHISM CARD STYLE */
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            transition: transform 0.3s ease, border-color 0.3s ease;
-        }
-
-        .card:active {
-            transform: scale(0.99);
-        }
-
-        .card-title {
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
-            color: var(--accent-amber);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        /* TABS VISIBILITY CONTROL */
-        .app-section {
-            display: none;
-        }
-
-        .app-section.active {
-            display: block;
-            animation: fadeIn 0.4s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* FORMS & INPUTS (ONBOARDING) */
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 11px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            letter-spacing: 1px;
-        }
-
-        .form-group input, .form-group select {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            padding: 12px;
-            color: var(--text-main);
-            font-family: var(--font-family);
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            border-color: var(--accent-amber);
-        }
-
-        /* BUTTONS */
-        .btn {
-            width: 100%;
-            background: linear-gradient(135deg, var(--accent-terracotta), var(--accent-amber));
-            border: none;
-            border-radius: 10px;
-            padding: 14px;
-            color: #000;
-            font-size: 14px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: opacity 0.2s, box-shadow 0.2s;
-            margin-top: 10px;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-            box-shadow: 0 0 15px var(--accent-glow);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--accent-amber);
-            color: var(--accent-amber);
-            margin-top: 10px;
-        }
-
-        /* DASHBOARD COSMO SPECIFICS */
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 11fr);
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .data-item {
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-            padding: 12px;
-            text-align: center;
-        }
-
-        .data-label {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-
-        .data-value {
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        .bulletin-text {
-            font-size: 13.5px;
-            line-height: 1.6;
-            color: #e2e2e5;
-        }
-
-        /* BIO-TRACKING SLIDERS */
-        .slider-container {
-            margin-bottom: 20px;
-        }
-
-        .slider-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            margin-bottom: 8px;
-        }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 6px;
-            border-radius: 3px;
-            background: rgba(255, 255, 255, 0.1);
-            outline: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: var(--accent-amber);
-            cursor: pointer;
-            box-shadow: 0 0 8px var(--accent-amber);
-        }
-
-        /* BOTTOM NAVIGATION BAR */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 480px;
-            background: rgba(11, 11, 12, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--card-border);
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 0;
-            z-index: 1000;
-        }
-
-        .nav-item {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-family: var(--font-family);
-            font-size: 11px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            transition: color 0.3s;
-        }
-
-        .nav-item.active {
-            color: var(--accent-amber);
-        }
-
-        .nav-icon {
-            font-size: 16px;
-        }
+        body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 480px; margin: 0 auto; padding: 20px; padding-bottom: 100px; flex: 1; }
+        
+        /* ANIMAZIONI FLUIDE */
+        .app-section { display: none; opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease; transform: translateY(10px); }
+        .app-section.active { display: block; opacity: 1; transform: translateY(0); }
+        
+        header { text-align: center; margin-bottom: 25px; padding-top: 10px; }
+        header h1 { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, var(--text-main), var(--accent-amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .card { background: var(--card-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); overflow: hidden; position: relative;}
+        .card-title { font-size: 14px; font-weight: 600; text-transform: uppercase; color: var(--accent-amber); margin-bottom: 15px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+        .form-group input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 8px; padding: 12px; color: var(--text-main); outline: none; }
+        
+        .btn { width: 100%; background: linear-gradient(135deg, var(--accent-terracotta), var(--accent-amber)); border: none; border-radius: 10px; padding: 14px; color: #000; font-weight: 700; text-transform: uppercase; cursor: pointer; margin-top: 10px; }
+        .btn-outline { background: transparent; border: 1px solid var(--accent-amber); color: var(--accent-amber); }
+        
+        /* DASHBOARD NASA */
+        #nasa-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.3; z-index: -1; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .data-item { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 12px; text-align: center; backdrop-filter: blur(5px); }
+        .data-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+        .data-value { font-size: 15px; font-weight: 600; }
+        
+        /* BOTTOM NAV */
+        .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: rgba(11, 11, 12, 0.9); backdrop-filter: blur(20px); border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; padding: 12px 0; z-index: 1000; }
+        .nav-item { background: none; border: none; color: var(--text-muted); font-size: 11px; text-transform: uppercase; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item.active { color: var(--accent-amber); }
     </style>
 </head>
 <body>
-
     <div class="app-container">
-        
         <header>
             <h1>CosmoSync</h1>
-            <p>Scienza & Allineamento Astrale</p>
         </header>
 
-        <!-- SEC. 1: ONBOARDING / PROFILO NATALE -->
         <section id="sec-profile" class="app-section active">
             <div class="card">
-                <div class="card-title">
-                    <span>Configurazione Tema Natale</span>
-                    <span style="font-size: 10px; color: var(--text-muted);">Step 1 di 2</span>
-                </div>
-                <div class="form-group">
-                    <label for="user-name">Nome</label>
-                    <input type="text" id="user-name" placeholder="Inserisci il tuo nome" value="Esploratore">
-                </div>
-                <div class="form-group">
-                    <label for="birth-date">Data di Nascita</label>
-                    <input type="date" id="birth-date">
-                </div>
-                <div class="form-group">
-                    <label for="birth-time">Ora Esatta</label>
-                    <input type="time" id="birth-time">
-                </div>
-                <div class="form-group">
-                    <label for="birth-place">Luogo di Nascita</label>
-                    <input type="text" id="birth-place" placeholder="Es. Treviso, Italia">
-                </div>
-                <button class="btn" onclick="saveProfile()">Calcola Allineamento</button>
+                <div class="card-title">Configurazione Astrale</div>
+                <div class="form-group"><label>Nome</label><input type="text" id="user-name" placeholder="Il tuo nome"></div>
+                <div class="form-group"><label>Data di Nascita</label><input type="date" id="birth-date"></div>
+                <div class="form-group"><label>Ora Esatta</label><input type="time" id="birth-time"></div>
+                <button class="btn" onclick="saveProfile()">Sincronizza</button>
             </div>
-
-            <!-- Box di riepilogo visibile solo se calcolato -->
             <div id="natal-summary-card" class="card" style="display: none;">
                 <div class="card-title">Il Tuo Big Three</div>
                 <div class="data-grid">
-                    <div class="data-item" style="border-color: var(--accent-terracotta);">
-                        <div class="data-label">Sole (Segno)</div>
-                        <div class="data-value" id="summary-sun">-</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">Luna (Emozioni)</div>
-                        <div class="data-value" id="summary-moon">-</div>
-                    </div>
+                    <div class="data-item"><div class="data-label">Sole</div><div class="data-value" id="summary-sun">-</div></div>
+                    <div class="data-item"><div class="data-label">Luna</div><div class="data-value" id="summary-moon">-</div></div>
                 </div>
                 <div class="data-grid">
-                    <div class="data-item" style="grid-column: span 2;">
-                        <div class="data-label">Ascendente (Anima)</div>
-                        <div class="data-value" id="summary-asc">-</div>
-                    </div>
+                    <div class="data-item" style="grid-column: span 2;"><div class="data-label">Ascendente</div><div class="data-value" id="summary-asc">-</div></div>
                 </div>
             </div>
         </section>
 
-        <!-- SEC. 2: DASHBOARD GENERALE -->
         <section id="sec-dashboard" class="app-section">
-            <!-- Dati Scientifici Real-Time -->
-            <div class="card">
-                <div class="card-title">
-                    <span>Bollettino Spaziale Real-Time</span>
-                    <span style="font-size: 8px; color: #4cd964; letter-spacing:0.5px;">● LIVE DATA</span>
-                </div>
+            <div class="card" style="min-height: 200px;">
+                <img id="nasa-bg" src="" alt="Spazio">
+                <div class="card-title" style="color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">Meteo Spaziale (NASA)</div>
                 <div class="data-grid">
-                    <div class="data-item">
-                        <div class="data-label">Fase Lunare</div>
-                        <div class="data-value" id="live-moon">Crescente (54%)</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">Stato Mercurio</div>
-                        <div class="data-value" id="live-mercury" style="color: var(--accent-amber);">Diretto</div>
-                    </div>
-                </div>
-                <div class="data-grid">
-                    <div class="data-item">
-                        <div class="data-label">Distanza Terra-Marte</div>
-                        <div class="data-value" style="font-size:12px;">225.3 Mln Km</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">Costellazione Attuale</div>
-                        <div class="data-value" style="font-size:12px;">Toro (Astronomico)</div>
-                    </div>
+                    <div class="data-item"><div class="data-label">Soggetto Oggetto</div><div class="data-value" id="nasa-title" style="font-size: 12px;">Caricamento...</div></div>
+                    <div class="data-item"><div class="data-label">Fase Lunare</div><div class="data-value">Crescente</div></div>
                 </div>
             </div>
-
-            <!-- Oroscopo ed Effemeridi Personali -->
             <div class="card">
-                <div class="card-title">Transito ed Impatto Giornaliero</div>
-                <div class="bulletin-text" id="daily-bulletin">
-                    Imposta il tuo profilo natale nella sezione iniziale per ricevere un bollettino iper-personalizzato basato sull'intersezione tra le effemeridi odierne e i tuoi pianeti natali.
-                </div>
-                <button class="btn btn-outline" onclick="shareToWhatsApp()">Condividi Report su WhatsApp</button>
+                <div class="card-title">Bollettino Personale</div>
+                <p id="daily-bulletin" style="font-size: 13px; line-height: 1.6; color: #e2e2e5;">Imposta il profilo per leggere i transiti.</p>
             </div>
         </section>
 
-        <!-- SEC. 3: BIO-ASTRAL TRACKING -->
         <section id="sec-bio" class="app-section">
             <div class="card">
-                <div class="card-title">Sincronizzazione Bio-Astrale</div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4;">
-                    Registra i tuoi parametri quotidiani per correlare i tuoi stati energetici fisici con le geometrie planetarie in corso.
-                </p>
-
-                <div class="slider-container">
-                    <div class="slider-header">
-                        <span>Livello di Energia</span>
-                        <span id="energy-val" style="color: var(--accent-amber);">5/10</span>
-                    </div>
-                    <input type="range" id="slider-energy" min="1" max="10" value="5" oninput="updateSliderLabels()">
-                </div>
-
-                <div class="slider-container">
-                    <div class="slider-header">
-                        <span>Qualità del Sonno</span>
-                        <span id="sleep-val" style="color: var(--accent-amber);">5/10</span>
-                    </div>
-                    <input type="range" id="slider-sleep" min="1" max="10" value="5" oninput="updateSliderLabels()">
-                </div>
-
-                <button class="btn" onclick="saveBioLog()">Salva Log Quotidiano</button>
-                <button class="btn btn-outline" style="border-color: rgba(255,255,255,0.15); color: var(--text-muted); font-size:11px;">
-                    🔄 Predisposizione API Wearable (Amazfit)
-                </button>
+                <div class="card-title">Registra Energia</div>
+                <div class="form-group"><label>Energia Fisica (1-10)</label><input type="range" id="slider-energy" min="1" max="10" value="5"></div>
+                <div class="form-group"><label>Qualità Sonno (1-10)</label><input type="range" id="slider-sleep" min="1" max="10" value="5"></div>
+                <button class="btn" onclick="saveBioLog()">Salva Log</button>
             </div>
-
-            <div class="card" id="bio-correlation-card" style="display:none;">
-                <div class="card-title">Analisi di Correlazione Corrente</div>
-                <div class="bulletin-text" style="font-size:12.5px;">
-                    <strong>Dato preliminare:</strong> Il tuo picco di energia registrato coincide con la Luna in fase crescente. Continua a tracciare per 7 giorni per sbloccare i grafici avanzati di incrocio dati.
-                </div>
+            <div class="card" id="chart-card" style="display: none;">
+                <div class="card-title">Visualizzazione Dati</div>
+                <canvas id="bioChart" width="100" height="60"></canvas>
+                <button class="btn btn-outline" style="margin-top: 20px;" onclick="exportCSV()">Scarica Dati (.CSV)</button>
             </div>
         </section>
-
     </div>
 
-    <!-- FIXED BOTTOM BAR NAVIGATION -->
     <nav class="bottom-nav">
-        <button class="nav-item active" onclick="switchTab('sec-profile', this)">
-            <span class="nav-icon">🌌</span>
-            <span>Profilo</span>
-        </button>
-        <button class="nav-item" onclick="switchTab('sec-dashboard', this)">
-            <span class="nav-icon">☀️</span>
-            <span>Cosmo</span>
-        </button>
-        <button class="nav-item" onclick="switchTab('sec-bio', this)">
-            <span class="nav-icon">🔋</span>
-            <span>BioSync</span>
-        </button>
+        <button class="nav-item active" onclick="switchTab('sec-profile', this)"><span>🌌 Profilo</span></button>
+        <button class="nav-item" onclick="switchTab('sec-dashboard', this)"><span>☀️ Cosmo</span></button>
+        <button class="nav-item" onclick="switchTab('sec-bio', this)"><span>🔋 BioSync</span></button>
     </nav>
 
-    <!-- CORE APPLICATION LOGIC -->
     <script>
-        // Mocking astrological arrays for calculation demo
         const zodiacSigns = ["Ariete", "Toro", "Gemelli", "Cancro", "Leone", "Vergine", "Bilancia", "Scorpione", "Sagittario", "Capricorno", "Acquario", "Pesci"];
+        let myChart = null;
 
-        // Tab Switching Logic
+        // ANIMATED TAB SWITCH
         function switchTab(sectionId, element) {
-            document.querySelectorAll('.app-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.app-section').forEach(sec => { sec.style.opacity = '0'; setTimeout(() => sec.classList.remove('active'), 200); });
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            
-            document.getElementById(sectionId).classList.add('active');
+            setTimeout(() => {
+                const target = document.getElementById(sectionId);
+                target.classList.add('active');
+                setTimeout(() => target.style.opacity = '1', 50);
+            }, 200);
             element.classList.add('active');
         }
 
-        // Handle Sliders UI Live Updates
-        function updateSliderLabels() {
-            document.getElementById('energy-val').innerText = document.getElementById('slider-energy').value + "/10";
-            document.getElementById('sleep-val').innerText = document.getElementById('slider-sleep').value + "/10";
-        }
-
-        // Onboarding logic & dynamic generation
-// 1. Calcolo ESATTO del Sole
+        // CALCOLO MATEMATICO
         function getSunSign(day, month) {
             if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) return 0;
             if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) return 1;
@@ -472,110 +142,94 @@
             if ((month == 1 && day >= 20) || (month == 2 && day <= 18)) return 10;
             return 11;
         }
-
-        // 2. Calcolo ASTRONOMICO Approssimativo della Luna
-        function getMoonSign(year, month, day) {
-            let y = year, m = month;
+        function getMoonSign(y, m, day) {
             if (m < 3) { y--; m += 12; }
-            const a = Math.floor(y / 100);
-            const b = 2 - a + Math.floor(a / 4);
-            const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + b - 1524.5;
-            const daysSinceEpoch = jd - 2451545.0;
-            let moonLong = 218.316 + (13.176396 * daysSinceEpoch);
-            moonLong = moonLong % 360;
+            const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + (2 - Math.floor(y / 100) + Math.floor(Math.floor(y / 100) / 4)) - 1524.5;
+            let moonLong = (218.316 + (13.176396 * (jd - 2451545.0))) % 360;
             if (moonLong < 0) moonLong += 360;
             return Math.floor(moonLong / 30);
         }
-
-        // 3. Calcolo STIMATO dell'Ascendente
         function getAscendant(sunIdx, hour) {
-            let shift = Math.floor((hour - 6) / 2);
-            let ascIdx = (sunIdx + shift) % 12;
-            if (ascIdx < 0) ascIdx += 12;
-            return ascIdx;
+            let ascIdx = (sunIdx + Math.floor((hour - 6) / 2)) % 12;
+            return ascIdx < 0 ? ascIdx + 12 : ascIdx;
         }
 
-        // 4. Nuova funzione di Onboarding
         function saveProfile() {
-            const name = document.getElementById('user-name').value || "Esploratore";
+            const name = document.getElementById('user-name').value || "Utente";
             const dateStr = document.getElementById('birth-date').value;
             const timeStr = document.getElementById('birth-time').value;
-
-            if(!dateStr || !timeStr) {
-                alert("Per favore, inserisci data e ora esatta per calcolare i transiti.");
-                return;
-            }
-
-            const [year, month, day] = dateStr.split('-').map(Number);
-            const hour = parseInt(timeStr.split(':')[0]); 
-
-            const sunIdx = getSunSign(day, month);
-            const moonIdx = getMoonSign(year, month, day);
-            const ascIdx = getAscendant(sunIdx, hour);
-
-            const userProfile = {
-                name: name,
-                sun: zodiacSigns[sunIdx],
-                moon: zodiacSigns[moonIdx],
-                ascendant: zodiacSigns[ascIdx]
-            };
-
-            localStorage.setItem('cosmosync_profile', JSON.stringify(userProfile));
-            renderProfileData(userProfile);
+            if(!dateStr || !timeStr) return alert("Inserisci data e ora!");
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const sun = getSunSign(d, m), moon = getMoonSign(y, m, d), asc = getAscendant(sun, parseInt(timeStr.split(':')[0]));
+            const prof = { name, sun: zodiacSigns[sun], moon: zodiacSigns[moon], ascendant: zodiacSigns[asc] };
+            localStorage.setItem('cs_prof', JSON.stringify(prof));
+            renderProfile(prof);
         }
-        function renderProfileData(profile) {
-            // Update profile summary visual card
+
+        function renderProfile(p) {
             document.getElementById('natal-summary-card').style.display = 'block';
-            document.getElementById('summary-sun').innerText = profile.sun;
-            document.getElementById('summary-moon').innerText = profile.moon;
-            document.getElementById('summary-asc').innerText = profile.ascendant;
-
-            // Generate customized dynamic bulletin based on profile
-            const dynamicText = `Ciao ${profile.name}. Oggi il Sole si muove armoniosamente nel tuo segno natale, il ${profile.sun}. La configurazione scientifica rileva una Luna Crescente al 54%, in perfetto trigono con la tua Luna in ${profile.moon}. Questa intersezione geometrica suggerisce un picco di lucidità mentale nel primo pomeriggio. Unica avvertenza: l'allineamento geometrico con il tuo Ascendente ${profile.ascendant} potrebbe generare una leggera reattività verbale spontanea. Gestisci l'energia con precisione millimetrica.`;
-            
-            document.getElementById('daily-bulletin').innerText = dynamicText;
-            
-            // Auto switch to Dashboard to show result
-            setTimeout(() => {
-                const targetNavBtn = document.querySelectorAll('.nav-item')[1];
-                switchTab('sec-dashboard', targetNavBtn);
-            }, 800);
+            document.getElementById('summary-sun').innerText = p.sun;
+            document.getElementById('summary-moon').innerText = p.moon;
+            document.getElementById('summary-asc').innerText = p.ascendant;
+            document.getElementById('daily-bulletin').innerText = `${p.name}, le letture indicano forte attività nel tuo segno (${p.sun}). Emozioni amplificate dalla Luna in ${p.moon}.`;
         }
 
+        // NASA API FETCH
+        async function fetchNASA() {
+            try {
+                const res = await fetch('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY');
+                const data = await res.json();
+                document.getElementById('nasa-bg').src = data.url;
+                document.getElementById('nasa-title').innerText = data.title.substring(0, 20) + '...';
+            } catch(e) { document.getElementById('nasa-title').innerText = "Spazio Profondo"; }
+        }
+
+        // BIOSYNC & CHART.JS
         function saveBioLog() {
-            const energy = document.getElementById('slider-energy').value;
-            const sleep = document.getElementById('slider-sleep').value;
-            
-            const bioLog = { energy, sleep, timestamp: new Date().toISOString() };
-            localStorage.setItem('cosmosync_biolog', JSON.stringify(bioLog));
-            
-            document.getElementById('bio-correlation-card').style.display = 'block';
-            alert("Log bio-astrale salvato localmente!");
+            const e = document.getElementById('slider-energy').value, s = document.getElementById('slider-sleep').value;
+            let logs = JSON.parse(localStorage.getItem('cs_logs') || '[]');
+            logs.push({ date: new Date().toLocaleDateString(), energy: e, sleep: s });
+            localStorage.setItem('cs_logs', JSON.stringify(logs));
+            renderChart();
         }
 
-        // WhatsApp sharing functionality
-        function shareToWhatsApp() {
-            const bulletin = document.getElementById('daily-bulletin').innerText;
-            const encodedText = encodeURIComponent(`*CosmoSync - Il mio Bollettino Astrale Quotidiano* 🌌
-
-${bulletin}`);
-            window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+        function renderChart() {
+            const logs = JSON.parse(localStorage.getItem('cs_logs') || '[]');
+            if(logs.length === 0) return;
+            document.getElementById('chart-card').style.display = 'block';
+            const ctx = document.getElementById('bioChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: logs.map(l => l.date),
+                    datasets: [
+                        { label: 'Energia', data: logs.map(l => l.energy), borderColor: '#f39c12', tension: 0.4 },
+                        { label: 'Sonno', data: logs.map(l => l.sleep), borderColor: '#e67e22', borderDash: [5, 5], tension: 0.4 }
+                    ]
+                },
+                options: { scales: { y: { min: 0, max: 10, ticks: { color: '#8e8e93' } }, x: { ticks: { color: '#8e8e93' } } }, plugins: { legend: { labels: { color: '#fff' } } } }
+            });
         }
 
-        // Check if profile exists on load
-        window.onload = function() {
-            // Set default date to 25 years ago if blank
-            const defaultDate = new Date();
-            defaultDate.setFullYear(defaultDate.getFullYear() - 25);
-            document.getElementById('birth-date').value = defaultDate.toISOString().split('T')[0];
-            document.getElementById('birth-time').value = "12:00";
+        // EXPORT CSV
+        function exportCSV() {
+            const logs = JSON.parse(localStorage.getItem('cs_logs') || '[]');
+            let csv = "Data,Energia,Sonno\n" + logs.map(l => `${l.date},${l.energy},${l.sleep}`).join("\n");
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'biosync_data.csv');
+            a.click();
+        }
 
-            const saved = localStorage.getItem('cosmosync_profile');
-            if(saved) {
-                const profile = JSON.parse(saved);
-                document.getElementById('user-name').value = profile.name;
-                renderProfileData(profile);
-            }
+        // INIT & SERVICE WORKER
+        window.onload = () => {
+            fetchNASA();
+            renderChart();
+            if(localStorage.getItem('cs_prof')) renderProfile(JSON.parse(localStorage.getItem('cs_prof')));
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
         };
     </script>
 </body>
