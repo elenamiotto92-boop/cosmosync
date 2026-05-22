@@ -457,23 +457,61 @@
         }
 
         // Onboarding logic & dynamic generation
+// 1. Calcolo ESATTO del Sole
+        function getSunSign(day, month) {
+            if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) return 0;
+            if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) return 1;
+            if ((month == 5 && day >= 21) || (month == 6 && day <= 20)) return 2;
+            if ((month == 6 && day >= 21) || (month == 7 && day <= 22)) return 3;
+            if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) return 4;
+            if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) return 5;
+            if ((month == 9 && day >= 23) || (month == 10 && day <= 22)) return 6;
+            if ((month == 10 && day >= 23) || (month == 11 && day <= 21)) return 7;
+            if ((month == 11 && day >= 22) || (month == 12 && day <= 21)) return 8;
+            if ((month == 12 && day >= 22) || (month == 1 && day <= 19)) return 9;
+            if ((month == 1 && day >= 20) || (month == 2 && day <= 18)) return 10;
+            return 11;
+        }
+
+        // 2. Calcolo ASTRONOMICO Approssimativo della Luna
+        function getMoonSign(year, month, day) {
+            let y = year, m = month;
+            if (m < 3) { y--; m += 12; }
+            const a = Math.floor(y / 100);
+            const b = 2 - a + Math.floor(a / 4);
+            const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + b - 1524.5;
+            const daysSinceEpoch = jd - 2451545.0;
+            let moonLong = 218.316 + (13.176396 * daysSinceEpoch);
+            moonLong = moonLong % 360;
+            if (moonLong < 0) moonLong += 360;
+            return Math.floor(moonLong / 30);
+        }
+
+        // 3. Calcolo STIMATO dell'Ascendente
+        function getAscendant(sunIdx, hour) {
+            let shift = Math.floor((hour - 6) / 2);
+            let ascIdx = (sunIdx + shift) % 12;
+            if (ascIdx < 0) ascIdx += 12;
+            return ascIdx;
+        }
+
+        // 4. Nuova funzione di Onboarding
         function saveProfile() {
             const name = document.getElementById('user-name').value || "Esploratore";
-            const date = document.getElementById('birth-date').value;
-            const time = document.getElementById('birth-time').value;
-            const place = document.getElementById('birth-place').value;
+            const dateStr = document.getElementById('birth-date').value;
+            const timeStr = document.getElementById('birth-time').value;
 
-            if(!date) {
-                alert("Per favore, inserisci almeno la tua data di nascita per calcolare i transiti.");
+            if(!dateStr || !timeStr) {
+                alert("Per favore, inserisci data e ora esatta per calcolare i transiti.");
                 return;
             }
 
-            // Pseudo-random algorithmic generation based on birth date hashes for demonstration
-            // In Production, this will be replaced by Swiss Ephemeris API calls
-            const charSum = date.split('-').reduce((acc, val) => acc + parseInt(val), 0);
-            const sunIdx = charSum % 12;
-            const moonIdx = (charSum * 3) % 12;
-            const ascIdx = (charSum + 7) % 12;
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const hour = parseInt(timeStr.split(':')[0]); 
+
+            const sunIdx = getSunSign(day, month);
+            const moonIdx = getMoonSign(year, month, day);
+            const ascIdx = getAscendant(sunIdx, hour);
 
             const userProfile = {
                 name: name,
@@ -485,7 +523,6 @@
             localStorage.setItem('cosmosync_profile', JSON.stringify(userProfile));
             renderProfileData(userProfile);
         }
-
         function renderProfileData(profile) {
             // Update profile summary visual card
             document.getElementById('natal-summary-card').style.display = 'block';
