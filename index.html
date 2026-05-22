@@ -8,444 +8,69 @@
     <meta name="theme-color" content="#13111c">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* RESET E VARIABILI DI DESIGN (MODERNO, MINIMALE MA CALDO) */
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
             --bg-base: #0f0e15;
             --panel-bg: rgba(28, 26, 41, 0.65);
             --panel-border: rgba(243, 156, 18, 0.15);
             --accent-gold: #f39c12;
             --accent-terracotta: #e67e22;
-            --accent-purple: #7e57c2;
-            --text-main: #fcfbf4; /* Avorio dorato ad alta leggibilità */
+            --text-main: #fcfbf4; 
             --text-muted: #a4a2b0;
             --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         body {
-            font-family: var(--font-family);
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
+            font-family: var(--font-family); background-color: var(--bg-base);
+            color: var(--text-main); min-height: 100vh; display: flex;
+            flex-direction: column; overflow-x: hidden; -webkit-font-smoothing: antialiased;
         }
 
-        /* SFONDO COSMICO DILUITO E COMENTE IN MOVIMENTO */
         .cosmic-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: radial-gradient(circle at 80% 20%, #21153b 0%, #0f0e15 70%);
-            z-index: -2;
-            overflow: hidden;
+            z-index: -2; overflow: hidden;
         }
-
         .ambient-glow {
-            position: absolute;
-            bottom: -10%;
-            right: -10%;
-            width: 60vw;
-            height: 60vw;
+            position: absolute; bottom: -10%; right: -10%; width: 60vw; height: 60vw;
             background: radial-gradient(circle, rgba(126, 87, 194, 0.15) 0%, rgba(0,0,0,0) 70%);
-            z-index: -1;
-            filter: blur(50px);
-            animation: pulseGlow 12s infinite ease-in-out;
+            z-index: -1; filter: blur(50px); animation: pulseGlow 12s infinite ease-in-out;
         }
-
-        /* Piccoli elementi celesti decorativi in movimento */
         .orbiting-element {
-            position: absolute;
-            top: 15%;
-            right: 10%;
-            width: 40px;
-            height: 40px;
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 50%;
+            position: absolute; top: 15%; right: 10%; width: 40px; height: 40px;
+            border: 1px solid rgba(255,255,255,0.05); border-radius: 50%;
             animation: spinOrbit 25s infinite linear;
         }
-
         .orbiting-element::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 6px;
-            height: 6px;
-            background: var(--accent-gold);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--accent-gold);
+            content: ''; position: absolute; top: 0; left: 50%; width: 6px; height: 6px;
+            background: var(--accent-gold); border-radius: 50%; box-shadow: 0 0 8px var(--accent-gold);
         }
 
-        @keyframes pulseGlow {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 1; }
-        }
+        @keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        @keyframes spinOrbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        @keyframes spinOrbit {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
+        .app-container { width: 100%; max-width: 480px; margin: 0 auto; padding: 24px; padding-bottom: 110px; flex: 1; }
+        header { text-align: center; margin-bottom: 28px; padding-top: 10px; }
+        header h1 { font-size: 26px; font-weight: 700; letter-spacing: 3px; background: linear-gradient(135deg, var(--text-main), var(--accent-gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
+        header p { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 4px; margin-top: 6px; }
 
-        /* CONTENITORE APPLICAZIONE */
-        .app-container {
-            width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 24px;
-            padding-bottom: 110px;
-            flex: 1;
-        }
+        .card { background: var(--panel-bg); backdrop-filter: blur(20px); border: 1px solid var(--panel-border); border-radius: 20px; padding: 22px; margin-bottom: 20px; box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5); position: relative; z-index: 1; }
+        .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 18px; color: var(--accent-gold); display: flex; align-items: center; justify-content: space-between; }
 
-        header {
-            text-align: center;
-            margin-bottom: 28px;
-            padding-top: 10px;
-        }
+        .app-section { display: none; opacity: 0; transform: translateY(12px); transition: opacity 0.35s ease, transform 0.35s ease; }
+        .app-section.active { display: block; opacity: 1; transform: translateY(0); }
 
-        header h1 {
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            background: linear-gradient(135deg, var(--text-main), var(--accent-gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 1px; }
+        .form-group input { width: 100%; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 14px; color: var(--text-main); font-family: var(--font-family); font-size: 14px; outline: none; transition: all 0.3s ease; }
+        .form-group input:focus { border-color: var(--accent-gold); background: rgba(255, 255, 255, 0.07); box-shadow: 0 0 10px rgba(243, 156, 18, 0.1); }
 
-        header p {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            margin-top: 6px;
-        }
+        .slider-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: var(--text-main); }
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); outline: none; margin-bottom: 20px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-terracotta), var(--accent-gold)); cursor: pointer; box-shadow: 0 0 10px var(--accent-gold); }
 
-        /* SCHEDE IN GLASSMORPHISM AVANZATO */
-        .card {
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--panel-border);
-            border-radius: 20px;
-            padding: 22px;
-            margin-bottom: 20px;
-            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 1;
-        }
+        .btn { width: 100%; background: linear-gradient(135deg, var(--accent-terracotta), var(--accent-gold)); border: none; border-radius: 12px; padding: 15px; color: #0b0e14; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(230, 126, 34, 0.2); }
+        .btn-outline { background: transparent; border: 1px solid var(--accent-gold); color: var(--accent-gold); box-shadow: none; margin-top: 12px; }
 
-        .card-title {
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 18px;
-            color: var(--accent-gold);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        /* ANIMAZIONE DELLE SEZIONI (TRANSIZIONE FLUIDA) */
-        .app-section {
-            display: none;
-            opacity: 0;
-            transform: translateY(12px);
-            transition: opacity 0.35s ease, transform 0.35s ease;
-        }
-
-        .app-section.active {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* CAMPI DI INPUT E FORM */
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 10px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            letter-spacing: 1px;
-        }
-
-        .form-group input {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            padding: 14px;
-            color: var(--text-main);
-            font-family: var(--font-family);
-            font-size: 14px;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            border-color: var(--accent-gold);
-            background: rgba(255, 255, 255, 0.07);
-            box-shadow: 0 0 10px rgba(243, 156, 18, 0.1);
-        }
-
-        /* RANGE SLIDERS */
-        .slider-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            margin-bottom: 8px;
-            color: var(--text-main);
-        }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 5px;
-            border-radius: 3px;
-            background: rgba(255, 255, 255, 0.12);
-            outline: none;
-            margin-bottom: 20px;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-terracotta), var(--accent-gold));
-            cursor: pointer;
-            box-shadow: 0 0 10px var(--accent-gold);
-            transition: transform 0.2s;
-        }
-
-        input[type="range"]::-webkit-slider-thumb:active {
-            transform: scale(1.2);
-        }
-
-        /* BOTTONI PREMIUM */
-        .btn {
-            width: 100%;
-            background: linear-gradient(135deg, var(--accent-terracotta), var(--accent-gold));
-            border: none;
-            border-radius: 12px;
-            padding: 15px;
-            color: #0b0e14;
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(230, 126, 34, 0.2);
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-            opacity: 0.9;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--accent-gold);
-            color: var(--accent-gold);
-            box-shadow: none;
-            margin-top: 12px;
-        }
-
-        /* GRIGLIE DATI COESISTENTI */
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        .data-item {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 12px;
-            padding: 14px;
-            text-align: center;
-        }
-
-        .data-label {
-            font-size: 9px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .data-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .bulletin-text {
-            font-size: 13.5px;
-            line-height: 1.6;
-            color: #e3e1e8;
-        }
-
-        /* IMMAGINE DELLA NASA (METEO SPAZIALE) */
-        .nasa-container {
-            position: relative;
-            width: 100%;
-            height: 160px;
-            border-radius: 14px;
-            overflow: hidden;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        #nasa-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.65;
-        }
-
-        .nasa-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(transparent, rgba(15, 14, 21, 0.95));
-        }
-
-        /* BARRA DI NAVIGAZIONE INFERIORE AD ALTA LEGGIBILITÀ */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 480px;
-            background: rgba(20, 18, 31, 0.92);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            justify-content: space-around;
-            padding: 14px 0 28px 0; /* padding aggiuntivo per i display moderni con bar */
-            z-index: 1000;
-        }
-
-        .nav-item {
-            background: none;
-            border: none;
-            color: var(--text-muted); /* Colore chiaro base per i pulsanti non attivi */
-            font-family: var(--font-family);
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s ease;
-            opacity: 0.7;
-        }
-
-        .nav-item.active {
-            color: var(--accent-gold); /* Splendente e leggibile sopra lo sfondo scuro */
-            opacity: 1;
-        }
-
-        .nav-icon {
-            font-size: 18px;
-        }
-
-        /* CANVAS PER I GRAFICI (CHART.JS) */
-        .chart-container {
-            position: relative;
-            width: 100%;
-            margin-top: 15px;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="cosmic-background">
-        <div class="ambient-glow"></div>
-        <div class="orbiting-element"></div>
-    </div>
-
-    <div class="app-container">
-        
-        <header>
-            <h1>CosmoSync</h1>
-            <p>Scienza & Allineamento Astrale</p>
-        </header>
-
-        <section id="sec-profile" class="app-section active">
-            <div class="card">
-                <div class="card-title">
-                    <span>Configurazione Tema Natale</span>
-                    <span style="font-size: 10px; color: var(--text-muted);">Step 1 di 3</span>
-                </div>
-                <div class="form-group">
-                    <label for="user-name">Nome Esploratore</label>
-                    <input type="text" id="user-name" placeholder="Inserisci il tuo nome" value="Stella">
-                </div>
-                <div class="data-grid">
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label for="birth-date">Data di Nascita</label>
-                        <input type="date" id="birth-date">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label for="birth-time">Ora Esatta</label>
-                        <input type="time" id="birth-time">
-                    </div>
-                </div>
-                <button class="btn" style="margin-top: 20px;" onclick="saveProfile()">Calcola Sincronizzazione</button>
-            </div>
-
-            <div id="natal-summary-card" class="card" style="display: none;">
-                <div class="card-title">La tua Trinità Astrale (Big Three)</div>
-                <div class="data-grid">
-                    <div class="data-item" style="border-color: rgba(230, 126, 34, 0.3);">
-                        <div class="data-label">Sole (Identità)</div>
-                        <div class="data-value" id="summary-sun">-</div>
-                    </div>
-                    <div class="data-item" style="border-color: rgba(126, 87, 194, 0.3);">
-                        <div class="data-label">Luna (Inconscio)</div>
-                        <div class="data-value" id="summary-moon">-</div>
-                    </div>
-                </div>
-                <div class="data-grid">
-                    <div class="data-item" style="grid-column: span 2;">
-                        <div class="data-label">Ascendente (Maschera Sociale)</div>
-                        <div class="data-value" id="summary-asc">-</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="sec-dashboard" class="app-section">
-            <div class="card" style="padding: 14px;">
-                <div class="card-title" style="margin-left: 8px; margin-top: 4px;">Meteo Spaziale Attivo</div>
-                <div class="nasa-container">
-                    <img id="nasa-img" src="" alt="Spazio Profondo NASA">
-                    <div class="nasa-overlay">
-                        <div class="data-label" style="color: rgba(255,255,255,0.6);">Scatto del Giorno NASA</div>
-                        <div id="nasa-title" style="font-size: 11px
+        .data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 14px; }
+        .data-item { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 12px; padding: 14px; text-align: center; }
