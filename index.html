@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CosmoSync</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#13111c">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-base: #0f0e15;
+            --panel-bg: rgba(28, 26, 41, 0.65);
+            --panel-border: rgba(243, 156, 18, 0.15);
+            --accent-gold: #f39c12;
+            --accent-terracotta: #e67e22;
+            --text-main: #fcfbf4; 
+            --text-muted: #a4a2b0;
+            --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family); background-color: var(--bg-base);
+            color: var(--text-main); min-height: 100vh; display: flex;
+            flex-direction: column; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+        }
+
+        .cosmic-background {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at 80% 20%, #21153b 0%, #0f0e15 70%);
+            z-index: -2; overflow: hidden;
+        }
+        .ambient-glow {
+            position: absolute; bottom: -10%; right: -10%; width: 60vw; height: 60vw;
+            background: radial-gradient(circle, rgba(126, 87, 194, 0.15) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1; filter: blur(50px); animation: pulseGlow 12s infinite ease-in-out;
+        }
+        .orbiting-element {
+            position: absolute; top: 15%; right: 10%; width: 40px; height: 40px;
+            border: 1px solid rgba(255,255,255,0.05); border-radius: 50%;
+            animation: spinOrbit 25s infinite linear;
+        }
+        .orbiting-element::after {
+            content: ''; position: absolute; top: 0; left: 50%; width: 6px; height: 6px;
+            background: var(--accent-gold); border-radius: 50%; box-shadow: 0 0 8px var(--accent-gold);
+        }
+
+        @keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        @keyframes spinOrbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .app-container { width: 100%; max-width: 480px; margin: 0 auto; padding: 24px; padding-bottom: 110px; flex: 1; }
+        header { text-align: center; margin-bottom: 28px; padding-top: 10px; }
+        header h1 { font-size: 26px; font-weight: 700; letter-spacing: 3px; background: linear-gradient(135deg, var(--text-main), var(--accent-gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
+        header p { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 4px; margin-top: 6px; }
+
+        .card { background: var(--panel-bg); backdrop-filter: blur(20px); border: 1px solid var(--panel-border); border-radius: 20px; padding: 22px; margin-bottom: 20px; box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5); position: relative; z-index: 1; }
+        .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 18px; color: var(--accent-gold); display: flex; align-items: center; justify-content: space-between; }
+
+        .app-section { display: none; opacity: 0; transform: translateY(12px); transition: opacity 0.35s ease, transform 0.35s ease; }
+        .app-section.active { display: block; opacity: 1; transform: translateY(0); }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 1px; }
+        .form-group input { width: 100%; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 14px; color: var(--text-main); font-family: var(--font-family); font-size: 14px; outline: none; transition: all 0.3s ease; }
+        .form-group input:focus { border-color: var(--accent-gold); background: rgba(255, 255, 255, 0.07); box-shadow: 0 0 10px rgba(243, 156, 18, 0.1); }
+
+        .slider-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: var(--text-main); }
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); outline: none; margin-bottom: 20px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-terracotta), var(--accent-gold)); cursor: pointer; box-shadow: 0 0 10px var(--accent-gold); }
+
+        .btn { width: 100%; background: linear-gradient(135deg, var(--accent-terracotta), var(--accent-gold)); border: none; border-radius: 12px; padding: 15px; color: #0b0e14; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(230, 126, 34, 0.2); }
+        .btn-outline { background: transparent; border: 1px solid var(--accent-gold); color: var(--accent-gold); box-shadow: none; margin-top: 12px; }
+
+        .data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 14px; }
+        .data-item { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 12px; padding: 14px; text-align: center; }
+        .data-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .data-value { font-size: 14px; font-weight: 600; color: var(--text-main); }
+        .bulletin-text { font-size: 13.5px; line-height: 1.6; color: #e3e1e8; }
+
+        .nasa-container { position: relative; width: 100%; height: 160px; border-radius: 14px; overflow: hidden; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.08); }
+        #nasa-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.65; }
+        .nasa-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 12px; background: linear-gradient(transparent, rgba(15, 14, 21, 0.95)); }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: rgba(20, 18, 31, 0.92); backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-around; padding: 14px 0 28px 0; z-index: 1000; }
+        .nav-item { background: none; border: none; color: var(--text-muted); font-family: var(--font-family); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.3s ease; opacity: 0.7; }
+        .nav-item.active { color: var(--accent-gold); opacity: 1; }
+        .chart-container { position: relative; width: 100%; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="cosmic-background"><div class="ambient-glow"></div><div class="orbiting-element"></div></div>
+    <div class="app-container">
+        <header>
+            <h1>CosmoSync</h1>
+            <p>Scienza & Allineamento Astrale</p>
+        </header>
+
+        <section id="sec-profile" class="app-section active">
+            <div class="card">
+                <div class="card-title">
+                    <span>Configurazione Tema Natale</span>
+                    <span style="font-size: 10px; color: var(--text-muted);">Step 1 di 3</span>
+                </div>
+                <div class="form-group">
+                    <label for="user-name">Nome Esploratore</label>
+                    <input type="text" id="user-name" placeholder="Inserisci il tuo nome">
+                </div>
+                <div class="form-group">
+                    <label for="birth-place">Luogo di Nascita</label>
+                    <input type="text" id="birth-place" placeholder="Es. Roma, Italia">
+                </div>
+                <div class="data-grid">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label for="birth-date">Data di Nascita</label>
+                        <input type="date" id="birth-date">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label for="birth-time">Ora Esatta</label>
+                        <input type="time" id="birth-time">
+                    </div>
+                </div>
+                <button class="btn" style="margin-top: 20px;" onclick="saveProfile()">Calcola Sincronizzazione</button>
+            </div>
+
+            <div id="natal-summary-card" class="card" style="display: none;">
+                <div class="card-title">La tua Trinità Astrale (Big Three)</div>
+                <div class="data-grid">
+                    <div class="data-item" style="border-color: rgba(230, 126, 34, 0.3);">
+                        <div class="data-label">Sole (Identità)</div>
+                        <div class="data-value" id="summary-sun">-</div>
+                    </div>
+                    <div class="data-item" style="border-color: rgba(126, 87, 194, 0.3);">
+                        <div class="data-label">Luna (Inconscio)</div>
+                        <div class="data-value" id="summary-moon">-</div>
+                    </div>
+                </div>
+                <div class="data-grid">
+                    <div class="data-item" style="grid-column: span 2;">
+                        <div class="data-label">Ascendente (Maschera Sociale)</div>
+                        <div class="data-value" id="summary-asc">-</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-dashboard" class="app-section">
+            <div class="card" style="padding: 14px;">
+                <div class="card-title" style="margin-left: 8px; margin-top: 4px;">Meteo Spaziale Attivo</div>
+                <div class="nasa-container">
+                    <img id="nasa-img" src="" alt="Spazio Profondo NASA">
+                    <div class="nasa-overlay">
+                        <div class="data-label" style="color: rgba(255,255,255,0.6);">Scatto del Giorno NASA</div>
+                        <div id="nasa-title" style="font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Loading Cosmos...</div>
+                    </div>
+                </div>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-label">Fase Lunare Odierna</div>
+                        <div class="data-value" style="font-size:13px; color: var(--accent-gold);">Crescente (58%)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Geometria Planetaria</div>
+                        <div class="data-value" style="font-size:13px;">Mercurio Diretto</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Intersezione Cosmica Personale</div>
+                <div class="bulletin-text" id="daily-bulletin">
+                    Inserisci i tuoi dati natali nella scheda "Profilo" per decodificare le effemeridi scientifiche di oggi sulla base dei tuoi pianeti natali.
+                </div>
+                <button class="btn btn-outline" onclick="shareToWhatsApp()">Esporta su WhatsApp</button>
+            </div>
+        </section>
+
+        <section id="sec-bio" class="app-section">
+            <div class="card">
+                <div class="card-title">Registrazione Parametri Vitali</div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">Traccia i tuoi vettori biologici giornalieri per analizzare l'impatto delle transizioni celesti sul tuo corpo.</p>
+                <div class="form-group">
+                    <div class="slider-header"><span>Energia Fisica percepita</span><span id="energy-val" style="color: var(--accent-gold); font-weight: 600;">5/10</span></div>
+                    <input type="range" id="slider-energy" min="1" max="10" value="5" oninput="updateSliders()">
+                </div>
+                <div class="form-group">
+                    <div class="slider-header"><span>Qualità del Sonno</span><span id="sleep-val" style="color: var(--accent-gold); font-weight: 600;">5/10</span></div>
+                    <input type="range" id="slider-sleep" min="1" max="10" value="5" oninput="updateSliders()">
+                </div>
+                <button class="btn" onclick="addBioLog()">Salva Log Giornaliero</button>
+            </div>
+            <div class="card" id="chart-card" style="display: none;">
+                <div class="card-title">Analisi di Correlazione Temporale</div>
+                <div class="chart-container"><canvas id="bioChart"></canvas></div>
+                <button class="btn btn-outline" style="border-color: rgba(255,255,255,0.15); color: var(--text-muted);" onclick="exportCSV()">📥 Esporta Storico (.CSV)</button>
+            </div>
+        </section>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('sec-profile', this)"><span class="nav-icon">🌌</span><span>Profilo</span></button>
+        <button class="nav-item" onclick="switchTab('sec-dashboard', this)"><span class="nav-icon">☀️</span><span>Cosmo</span></button>
+        <button class="nav-item" onclick="switchTab('sec-bio', this)"><span class="nav-icon">🔋</span><span>BioSync</span></button>
+    </nav>
+
+    <script>
+        const zodiacSigns = ["Ariete", "Toro", "Gemelli", "Cancro", "Leone", "Vergine", "Bilancia", "Scorpione", "Sagittario", "Capricorno", "Acquario", "Pesci"];
+        let bioChartInstance = null;
+
+        function switchTab(sectionId, element) {
+            const currentActive = document.querySelector('.app-section.active');
+            if(currentActive.id === sectionId) return;
+
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            element.classList.add('active');
+
+            currentActive.style.opacity = '0';
+            currentActive.style.transform = 'translateY(12px)';
+            
+            setTimeout(() => {
+                currentActive.classList.remove('active');
+                const nextActive = document.getElementById(sectionId);
+                nextActive.classList.add('active');
+                nextActive.offsetHeight; 
+                nextActive.style.opacity = '1';
+                nextActive.style.transform = 'translateY(0)';
+            }, 200);
+        }
+
+        function updateSliders() {
+            document.getElementById('energy-val').innerText = document.getElementById('slider-energy').value + "/10";
+            document.getElementById('sleep-val').innerText = document.getElementById('slider-sleep').value + "/10";
+        }
+
+        function getSunSign(day, month) {
+            if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) return 0;
+            if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) return 1;
+            if ((month == 5 && day >= 21) || (month == 6 && day <= 20)) return 2;
+            if ((month == 6 && day >= 21) || (month == 7 && day <= 22)) return 3;
+            if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) return 4;
+            if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) return 5;
+            if ((month == 9 && day >= 23) || (month == 10 && day <= 22)) return 6;
+            if ((month == 10 && day >= 23) || (month == 11 && day <= 21)) return 7;
+            if ((month == 11 && day >= 22) || (month == 12 && day <= 21)) return 8;
+            if ((month == 12 && day >= 22) || (month == 1 && day <= 19)) return 9;
+            if ((month == 1 && day >= 20) || (month == 2 && day <= 18)) return 10;
+            return 11;
+        }
+
+        function getMoonSign(year, month, day) {
+            let y = year, m = month;
+            if (m < 3) { y--; m += 12; }
+            const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + (2 - Math.floor(y / 100) + Math.floor(Math.floor(y / 100) / 4)) - 1524.5;
+            let moonLong = (218.316 + (13.176396 * (jd - 2451545.0))) % 360;
+            if (moonLong < 0) moonLong += 360;
+            return Math.floor(moonLong / 30);
+        }
+
+        function getAscendant(sunIdx, hour) {
+            let ascIdx = (sunIdx + Math.floor((hour - 6) / 2)) % 12;
+            return ascIdx < 0 ? ascIdx + 12 : ascIdx;
+        }
+
+        function saveProfile() {
+            try {
+                const name = document.getElementById('user-name').value || "Esploratore";
+                const place = document.getElementById('birth-place').value || "Mondo";
+                const dateStr = document.getElementById('birth-date').value;
+                const timeStr = document.getElementById('birth-time').value;
+
+                if(!dateStr || !timeStr) {
+                    alert("Completa i campi Data e Ora per calcolare il tema natale.");
+                    return;
+                }
+
+                const [year, month, day] = dateStr.split('-').map(Number);
+                const hour = parseInt(timeStr.split(':')[0]);
+
+                const sunIdx = getSunSign(day, month);
+                const moonIdx = getMoonSign(year, month, day);
+                const ascIdx = getAscendant(sunIdx, hour);
+
+                const profile = {
+                    name: name,
+                    place: place,
+                    sun: zodiacSigns[sunIdx],
+                    moon: zodiacSigns[moonIdx],
+                    ascendant: zodiacSigns[ascIdx]
+                };
+
+                localStorage.setItem('cosmosync_profile', JSON.stringify(profile));
+                renderProfileData(profile);
+            } catch (error) {
+                alert("Errore nel calcolo. Assicurati di aver compilato tutti i campi correttamente.");
+            }
+        }
+
+        function renderProfileData(profile) {
+            document.getElementById('natal-summary-card').style.display = 'block';
+            document.getElementById('summary-sun').innerText = profile.sun;
+            document.getElementById('summary-moon').innerText = profile.moon;
+            document.getElementById('summary-asc').innerText = profile.ascendant;
+
+            const text = `Salute a te, ${profile.name} da ${profile.place}. Oggi lo studio delle effemeridi indica che il Sole sta intersecando l'orbita di transito del tuo segno solare in ${profile.sun}. La Luna Crescente odierna genera un'armonica geometria di trigono con la tua Luna natale situata in ${profile.moon}, favorendo una notevole stabilizzazione del tono emotivo generale. Presta attenzione alla tarda serata: i transiti geometrici rispetto al tuo ascendente ${profile.ascendant} potrebbero innescare momenti di reattività spontanea. Canalizza l'energia con precisione scientifica.`;
+            document.getElementById('daily-bulletin').innerText = text;
+
+            setTimeout(() => {
+                const navBtnCosmo = document.querySelectorAll('.nav-item')[1];
+                if(navBtnCosmo) switchTab('sec-dashboard', navBtnCosmo);
+            }, 1000);
+        }
+
+        async function fetchNasaData() {
+            try {
+                const response = await fetch('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY');
+                if(!response.ok) throw new Error();
+                const data = await response.json();
+                document.getElementById('nasa-img').src = data.url;
+                document.getElementById('nasa-title').innerText = data.title;
+            } catch (error) {
+                document.getElementById('nasa-img').src = 'https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1000&auto=format&fit=crop';
+                document.getElementById('nasa-title').innerText = 'Nebulosa di Orione (Meteo Base)';
+            }
+        }
+
+        function addBioLog() {
+            const energy = parseInt(document.getElementById('slider-energy').value);
+            const sleep = parseInt(document.getElementById('slider-sleep').value);
+            const today = new Date().toLocaleDateString('it-IT', {day: 'numeric', month: 'short'});
+            let logs = JSON.parse(localStorage.getItem('cosmosync_biologs') || '[]');
+            if(logs.length >= 7) logs.shift();
+            logs.push({ date: today, energy, sleep });
+            localStorage.setItem('cosmosync_biologs', JSON.stringify(logs));
+            renderChart();
+            alert("Vettore bio-astrale archiviato con successo!");
+        }
+
+        function renderChart() {
+            const logs = JSON.parse(localStorage.getItem('cosmosync_biologs') || '[]');
+            if(logs.length === 0) return;
+            document.getElementById('chart-card').style.display = 'block';
+            const ctx = document.getElementById('bioChart').getContext('2d');
+            if (bioChartInstance) bioChartInstance.destroy();
+            bioChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels: logs.map(l => l.date), datasets: [
+                    { label: 'Energia', data: logs.map(l => l.energy), borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.1)', borderWidth: 2, tension: 0.35, fill: true },
+                    { label: 'Sonno', data: logs.map(l => l.sleep), borderColor: '#e67e22', backgroundColor: 'transparent', borderWidth: 2, borderDash: [4, 4], tension: 0.35 }
+                ]},
+                options: { responsive: true, plugins: { legend: { labels: { color: '#fcfbf4', font: { size: 10 } } } }, scales: { y: { min: 1, max: 10, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a4a2b0', font: { size: 10 } } }, x: { grid: { display: false }, ticks: { color: '#a4a2b0', font: { size: 10 } } } } }
+            });
+        }
+
+        function exportCSV() {
+            const logs = JSON.parse(localStorage.getItem('cosmosync_biologs') || '[]');
+            if(logs.length === 0) return alert("Nessun dato registrato disponibile per l'esportazione.");
+            let csvContent = "data:text/csv;charset=utf-8,Data,Energia,Sonno\n";
+            logs.forEach(log => { csvContent += `${log.date},${log.energy},${log.sleep}\n`; });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "CosmoSync_Biolog_Storico.csv");
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        function shareToWhatsApp() {
+            const bulletin = document.getElementById('daily-bulletin').innerText;
+            const encodedText = encodeURIComponent(`*CosmoSync — Bollettino di Allineamento Spaziale* 🌌\n\n${bulletin}`);
+            window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+        }
+
+        window.onload = function() {
+            fetchNasaData();
+            renderChart();
+            const savedProfile = localStorage.getItem('cosmosync_profile');
+            if(savedProfile) {
+                const profile = JSON.parse(savedProfile);
+                document.getElementById('user-name').value = profile.name;
+                document.getElementById('birth-place').value = profile.place || "";
+                renderProfileData(profile);
+            }
+        };
+    </script>
+</body>
+</html>
