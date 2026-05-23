@@ -362,4 +362,97 @@
                     textOutput = `[ Proiezione Settimanale ]\n${options[hash]}`;
                 } else {
                     const options = [
-                        `Questo mese sol
+                        `Questo mese solare rappresenta un punto di svolta strutturale per i nati nella Decade ${profile.decan}. L'espansione è garantita se mantieni il focus. L'orizzonte lavorativo è illuminato.`,
+                        `Fase mensile introspettiva. Il cosmo ti chiede di rallentare i ritmi esterni. Nutri la tua Luna in ${profile.moon} dedicando tempo alla sfera personale e domestica.`,
+                        `Le effemeridi mensili indicano un'accelerazione degli eventi. Ciò che sembrava bloccato si sbloccherà rapidamente. Il tuo Ascendente in ${profile.ascendant} ti fornirà il coraggio necessario.`,
+                        `Un mese dedicato alla creatività e alla rigenerazione. Le geometrie planetarie supportano l'espressione di talenti nascosti. Lascia andare il controllo eccessivo.`
+                    ];
+                    textOutput = `[ Macro-Visione Mensile ]\n${options[hash]}`;
+                }
+
+                textEl.innerText = textOutput;
+                textEl.style.opacity = 1;
+            }, 150);
+        }
+
+        async function fetchNasaData() {
+            try {
+                const response = await fetch('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY');
+                if(!response.ok) throw new Error();
+                const data = await response.json();
+                document.getElementById('nasa-img').src = data.url;
+                document.getElementById('nasa-title').innerText = data.title;
+            } catch (error) {
+                document.getElementById('nasa-img').src = 'https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1000&auto=format&fit=crop';
+                document.getElementById('nasa-title').innerText = 'Nebulosa (Backup)';
+            }
+        }
+
+        function addBioLog() {
+            const energy = parseInt(document.getElementById('slider-energy').value);
+            const sleep = parseInt(document.getElementById('slider-sleep').value);
+            const today = new Date().toLocaleDateString('it-IT', {day: 'numeric', month: 'short'});
+            let logs = JSON.parse(localStorage.getItem('cosmosync_biologs') || '[]');
+            if(logs.length >= 7) logs.shift();
+            logs.push({ date: today, energy, sleep });
+            localStorage.setItem('cosmosync_biologs', JSON.stringify(logs));
+            renderChart();
+            alert("Vettore bio-astrale archiviato!");
+        }
+
+        function renderChart() {
+            const logs = JSON.parse(localStorage.getItem('cosmosync_biologs') || '[]');
+            if(logs.length === 0) return;
+            document.getElementById('chart-card').style.display = 'block';
+            const ctx = document.getElementById('bioChart').getContext('2d');
+            if (bioChartInstance) bioChartInstance.destroy();
+            bioChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels: logs.map(l => l.date), datasets: [
+                    { label: 'Energia', data: logs.map(l => l.energy), borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.1)', borderWidth: 2, tension: 0.35, fill: true },
+                    { label: 'Sonno', data: logs.map(l => l.sleep), borderColor: '#e67e22', backgroundColor: 'transparent', borderWidth: 2, borderDash: [4, 4], tension: 0.35 }
+                ]},
+                options: { responsive: true, plugins: { legend: { labels: { color: '#fcfbf4', font: { size: 10 } } } }, scales: { y: { min: 1, max: 10, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a4a2b0', font: { size: 10 } } }, x: { grid: { display: false }, ticks: { color: '#a4a2b0', font: { size: 10 } } } } }
+            });
+        }
+
+        function exportCSV() {
+            const logs = JSON.parse(localStorage.getItem('cosmosync_biologs') || '[]');
+            if(logs.length === 0) return alert("Nessun dato registrato.");
+            let csvContent = "data:text/csv;charset=utf-8,Data,Energia,Sonno\n";
+            logs.forEach(log => { csvContent += `${log.date},${log.energy},${log.sleep}\n`; });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "CosmoSync_Storico.csv");
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        function shareToWhatsApp() {
+            const bulletin = document.getElementById('daily-bulletin').innerText;
+            const encodedText = encodeURIComponent(`*CosmoSync — Report Spaziale* 🌌\n\n${bulletin}`);
+            window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+        }
+
+        window.onload = function() {
+            fetchNasaData();
+            renderChart();
+            try {
+                const savedProfile = localStorage.getItem('cosmosync_profile');
+                if(savedProfile) {
+                    const profile = JSON.parse(savedProfile);
+                    document.getElementById('user-name').value = profile.name || "";
+                    document.getElementById('birth-place').value = profile.place || "";
+                    
+                    document.getElementById('natal-summary-card').style.display = 'block';
+                    document.getElementById('summary-sun').innerText = profile.sun;
+                    document.getElementById('summary-moon').innerText = profile.moon;
+                    document.getElementById('summary-asc').innerText = profile.ascendant;
+
+                    loadHoroscopeView('daily');
+                }
+            } catch(e) {}
+        };
+    </script>
+</body>
+</html>
